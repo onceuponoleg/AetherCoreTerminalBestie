@@ -31,6 +31,7 @@
 * [`docs/03_MODES_AND_UI_UX.md`](docs/03_MODES_AND_UI_UX.md) — Описание всех 6 режимов, логики управления и интерфейса.
 * [`docs/04_NETWORK_AND_SD_STORAGE.md`](docs/04_NETWORK_AND_SD_STORAGE.md) — Протокол синхронизации через Google Apps Script и структура SD-карты.
 * [`docs/05_ENCLOSURE_AND_ERGONOMICS.md`](docs/05_ENCLOSURE_AND_ERGONOMICS.md) — 3D-печать корпуса, элементы управления, подсветка LED Filament и эргономика.
+* [`docs/06_WIRING_SCHEMATIC.md`](docs/06_WIRING_SCHEMATIC.md.md) — Общая схема подключений, обвязок и шин.
 
 
 ## 🚀 Быстрый старт (перепишем позднее, когда будет нормальный локальный build)
