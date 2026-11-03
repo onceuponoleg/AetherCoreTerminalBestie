@@ -4,9 +4,83 @@
 ## 1. Интерактивная структурно-электрическая схема (Mermaid)
 
 ```mermaid
-    graph LR
-    A[USB Type-C] --> B[ESP32-S3]
+graph LR
+subgraph PWR ["1. ПИТАНИЕ И ФИЛЬТРАЦИЯ"]
+USBC["Разъем USB Type-C на корпус (R=5.1k на CC1/CC2)"]
+FUSE["F1: Предохранитель PPTC Polyfuse 1.1A"]
+BRK["Клеммы Shield: C1=1000мкФ (16V), C2=100нФ"]
+USBC -->|"+5V и GND"| FUSE
+FUSE --> BRK
+end
 
+MCU["ЯДРО: ESP32-S3-DevKitC-1 (N16R8: 16MB Flash, 8MB PSRAM)"]
+BRK -->|"+5V, +3.3V, GND"| MCU
+
+subgraph I2C_BOX ["2. ШИНА ДАТЧИКОВ I2C (3.3V)"]
+I2C_HUB(["Шина I2C: SDA = GPIO 8, SCL = GPIO 9"])
+S_ENS["ENS160 + AHT21 (0x53, 0x38): Газы и Климат"]
+S_BMP["BMP280 (0x76): Барометр"]
+S_MPU["MPU6050 (0x68): Сейсмограф"]
+S_TCS["TCS34725 (0x29): Свет (Пин LED на GND)"]
+I2C_HUB --> S_ENS
+I2C_HUB --> S_BMP
+I2C_HUB --> S_MPU
+I2C_HUB --> S_TCS
+end
+
+MCU -->|"GPIO 8, GPIO 9"| I2C_HUB
+
+subgraph DUST_BOX ["3. ДАТЧИК ПЫЛИ (5V)"]
+DUST["Sharp GP2Y1014AU0F (Pin1 V-LED через 150 Ом + 220мкФ)"]
+DIV["Делитель выхода Vo: 10 кОм + 10 кОм на GND"]
+ADC_IN(["Вход АЦП: GPIO 1 (ADC1_CH0)"])
+DUST -->|"Pin 5 (Vo)"| DIV
+DIV -->|"0..2.0V"| ADC_IN
+end
+
+MCU -->|"GPIO 7 (Импульс ИК)"| DUST
+
+subgraph SPI_BOX ["4. ЭКРАН И SD-КАРТА (SPI, 3.3V)"]
+TFT["IPS TFT ST7796 (CS:10, DC:14, RST:21, BLK:48)"]
+SD["Слот MicroSD (SD_CS: GPIO 38)"]
+end
+
+MCU -->|"SPI (MOSI:11, SCK:12, MISO:13) + CS/DC/RST/BLK"| TFT
+MCU -->|"SPI + GPIO 38"| SD
+
+subgraph AUDIO_BOX ["5. АУДИО (ШУМОМЕР И ЭМБИЕНТ)"]
+MIC["Микрофон INMP441 (WS:4, SCK:5, SD:6, L/R на GND)"]
+DAC["ЦАП PCM5102A (BCK:41, LCK:42, DIN:2, SCK на GND)"]
+AMP["Усилитель PAM8403 (+5V, фильтр C3=470мкФ, ручка VOL)"]
+SPK["Динамик 40мм (3Вт, 4 Ом)"]
+DAC -->|"L/R/GND"| AMP
+AMP --> SPK
+end
+
+MCU -->|"I2S_0 (GPIO 4, 5, 6)"| MIC
+MCU -->|"I2S_1 (GPIO 41, 42, 2)"| DAC
+
+subgraph LIGHT_BOX ["6. ПОДСВЕТКА LED FILAMENT 3V"]
+GATE["Затвор: 100 Ом + подтяжка 10 кОм на GND"]
+MOS["Ключ N-MOSFET AO3400 (Source на GND)"]
+FIL["Нити LED Filament 3V (к +3.3V через R=10 Ом каждая)"]
+GATE --> MOS
+MOS -->|"Drain"| FIL
+end
+
+MCU -->|"GPIO 46 (ШИМ)"| GATE
+
+subgraph CTRL_BOX ["7. УПРАВЛЕНИЕ (INPUT_PULLUP, на GND)"]
+ENC1["ENC_MODE (Режимы/Назад): GPIO 15, 16, 17"]
+ENC2["ENC_SUB (Подрежимы/ОК): GPIO 18, 39, 40"]
+ENC3["ENC_LIGHT (Диммер света): GPIO 19, 20, 3"]
+SWS["Тумблеры: SW_SRC (GPIO 47), SW_NIGHT (GPIO 45)"]
+end
+
+MCU -->|"GPIO 15, 16, 17"| ENC1
+MCU -->|"GPIO 18, 39, 40"| ENC2
+MCU -->|"GPIO 19, 20, 3"| ENC3
+MCU -->|"GPIO 47, 45"| SWS
 ```
 
 
